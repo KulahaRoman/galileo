@@ -8,12 +8,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Thread-safe HashMap, also safe for virtual threads.
+ * Thread-safe HashMap, safe for virtual threads (avoids synchronized-blocks).
  *
  * @param <K> key type
  * @param <V> value type
  */
-public class ConcurrentHashMap<K, V> implements Map<K, V> {
+public class ThreadSafeHashMap<K, V> implements Map<K, V> {
     private final Map<K, V> map = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 

@@ -9,14 +9,13 @@ import galileo.server.model.PedState;
 import galileo.server.model.Player;
 import galileo.server.model.PlayerState;
 import galileo.server.model.Vector3D;
+import galileo.utils.ThreadSafeHashMap;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class Main {
     public static void main(String[] args) {
-        var players = new ConcurrentHashMap<Connection<Packet>, Player>();
+        var players = new ThreadSafeHashMap<Connection<Packet>, Player>();
 
         var debugPlayerName = "Debug_Player";
         var debugPlayerState = new PlayerState();
