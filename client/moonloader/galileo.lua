@@ -3,6 +3,7 @@ local Connector = require("galileo.network.Connector")
 local Packet = require("galileo.network.Packet")
 local PlayerProvider = require("galileo.provider.PlayerProvider")
 local Serializer = require("galileo.util.Serializer")
+local ConfigManager = require("galileo.config.ConfigManager")
 
 local SAMP_CHECK_PERIOD = 200
 local MAIN_PERIOD = 0
@@ -36,7 +37,12 @@ function main()
         wait(SAMP_CHECK_PERIOD)
     end
 
-    local connection = Connector.connect("127.0.0.1", 5000)
+    local configManager = ConfigManager.new()
+
+    local hostname = configManager.config.server.hostname
+    local port = configManager.config.server.port
+
+    local connection = Connector.connect(hostname, port)
 
     -- shared table (between threads)
     local players = {}
