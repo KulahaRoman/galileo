@@ -3,7 +3,7 @@ local Color = require("galileo.util.Color")
 local Vector2D = require('galileo.util.Vector2D')
 local Vector3D = require('galileo.util.Vector3D')
 
-local RENDER_MIN_DISTANCE = 0
+local RENDER_MIN_DISTANCE = 50
 
 local PlayerRenderer = {}
 PlayerRenderer.__index = PlayerRenderer
