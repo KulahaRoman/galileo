@@ -11,7 +11,6 @@ PlayerRenderer.__index = PlayerRenderer
 function PlayerRenderer.new()
     local object = setmetatable({}, PlayerRenderer)
     object.font = renderCreateFont('Verdana', 12, FontFlag.BOLD + FontFlag.SHADOW)
-    object.enabled = false
 
     return object
 end
@@ -38,7 +37,7 @@ function PlayerRenderer:renderCircle(x, y, radius, color)
         local py = y + math.sin(angle) * radius
         renderVertex(px, py)
     end
-  
+
     local px = x + math.cos(0) * radius
     local py = y + math.sin(0) * radius
 
@@ -60,21 +59,17 @@ function PlayerRenderer:renderPlayerMarker(coords, color)
 end
 
 function PlayerRenderer:render(player)
-    if isKeyJustPressed(VK_P) and not sampIsCursorActive() then
-        self.enabled = not self.enabled
-    end
-
     local playerCoords = player.state.pedCoords
     local cameraCoords = Vector3D.new(getActiveCameraCoordinates())
     local cameraPointCoords = Vector3D.new(getActiveCameraPointAt())
     local cameraToPlayerDistance = Vector3D.magnitude(Vector3D.sub(playerCoords, cameraCoords))
 
-    if PlayerRenderer.isPointInView(playerCoords, cameraCoords, cameraPointCoords) and 
-            cameraToPlayerDistance > RENDER_MIN_DISTANCE  and self.enabled then
+    if PlayerRenderer.isPointInView(playerCoords, cameraCoords, cameraPointCoords) and
+            cameraToPlayerDistance > RENDER_MIN_DISTANCE then
         local screenCoords = Vector2D.new(convert3DCoordsToScreen(playerCoords.x, playerCoords.y, playerCoords.z))
 
         PlayerRenderer:renderPlayerMarker(screenCoords, player.state.pedColor)
-    end 
+    end
 end
 
 return PlayerRenderer

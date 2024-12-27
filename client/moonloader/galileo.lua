@@ -14,11 +14,20 @@ local function renderThread(players)
 
     local playerRenderer = Renderer.new()
 
+    local enabled = false
+
     -- render loop
     while true do
+        -- toggle rendering
+        if isKeyJustPressed(VK_P) and not sampIsCursorActive() then
+            enabled = not enabled
+        end
+
         -- render players
-        for player in values(players) do
-            playerRenderer:render(player)
+        if enabled then
+            for player in values(players) do
+                playerRenderer:render(player)
+            end 
         end
 
         -- yield CPU
