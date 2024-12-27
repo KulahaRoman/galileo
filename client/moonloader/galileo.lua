@@ -6,8 +6,7 @@ local Serializer = require("galileo.util.Serializer")
 local ConfigManager = require("galileo.config.ConfigManager")
 
 local SAMP_CHECK_PERIOD = 200
-local MAIN_PERIOD = 0
-local RENDER_PERIOD = 5
+local RENDER_PERIOD = 0
 
 local function renderThread(players)
     local Renderer = require("galileo.render.PlayerRenderer")
@@ -73,8 +72,5 @@ function main()
         for index, player in ipairs(playersTable) do
             players[index] = Player.parse(player)
         end
-
-        -- yield CPU
-        wait(MAIN_PERIOD)
     end
 end

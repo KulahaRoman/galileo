@@ -30,8 +30,8 @@ function PlayerRenderer:renderCircle(x, y, radius, color)
 
     renderVertex(x, y)
 
-    for i = 0, 30 do
-        local angle = math.rad((i / 30) * 360)
+    for i = 0, 60 do
+        local angle = math.rad((i / 60) * 360)
         local px = x + math.cos(angle) * radius
         local py = y + math.sin(angle) * radius
         renderVertex(px, py)
@@ -47,12 +47,12 @@ end
 
 function PlayerRenderer:renderPlayerMarker(coords, color)
     local a, r, g, b = Color.explode(color)
-    local playerColor = Color.implode(100, r, g, b)
+    local playerColor = Color.implode(180, r, g, b)
     local borderColor = Color.implode(100, 0, 0, 0)
-    local marginColor = Color.implode(100, 255, 255, 255)
+    local marginColor = Color.implode(180, 255, 255, 255)
 
-    PlayerRenderer:renderCircle(coords.x, coords.y, 11, borderColor)
-    PlayerRenderer:renderCircle(coords.x, coords.y, 10, marginColor)
+    PlayerRenderer:renderCircle(coords.x, coords.y, 12, borderColor)
+    PlayerRenderer:renderCircle(coords.x, coords.y, 11, marginColor)
     PlayerRenderer:renderCircle(coords.x, coords.y, 9, borderColor)
     PlayerRenderer:renderCircle(coords.x, coords.y, 8, playerColor)
 end

@@ -7,6 +7,7 @@ Connection.__index = Connection
 function Connection.new(socket)
     local object = setmetatable({}, Connection)
     object.socket = socket
+    object.socket:settimeout(0)
 
     return object
 end
@@ -21,10 +22,19 @@ function Connection:write(packet)
 end
 
 function Connection:read()
-    local payloadLengthBytes = self.socket:receive(4)
+    local payloadLengthBytes
+    while not payloadLengthBytes do
+        payloadLengthBytes = self.socket:receive(4)
+        wait(0)
+    end
+
     local payloadLength = Struct.unpack(">I4", payloadLengthBytes)
 
-    local payloadData = self.socket:receive(payloadLength)
+    local payloadData
+    while not payloadData do
+        payloadData = self.socket:receive(payloadLength)
+        wait(0)
+    end
 
     return Packet.new(payloadData)
 end

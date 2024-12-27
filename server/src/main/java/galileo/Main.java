@@ -1,14 +1,10 @@
 package galileo;
 
 import galileo.core.Connection;
-import galileo.server.GalileoConnection;
 import galileo.server.GalileoConnectionHandlerFactory;
 import galileo.server.GalileoServer;
 import galileo.server.Packet;
-import galileo.server.model.PedState;
 import galileo.server.model.Player;
-import galileo.server.model.PlayerState;
-import galileo.server.model.Vector3D;
 import galileo.utils.ThreadSafeHashMap;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,8 +23,8 @@ public class Main {
 //
 //        var debugPlayer = new Player(debugPlayerName, debugPlayerState);
 //        players.put(new GalileoConnection(null, null), debugPlayer);
-
-        try (var server = new GalileoServer(5000, new GalileoConnectionHandlerFactory(players))) {
+        int port = Integer.parseInt(System.getenv("PORT"));
+        try (var server = new GalileoServer(port, new GalileoConnectionHandlerFactory(players))) {
             server.run();
         } catch (Exception e) {
             log.error(e.getMessage());
