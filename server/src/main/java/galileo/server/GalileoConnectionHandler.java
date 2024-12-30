@@ -40,8 +40,9 @@ public class GalileoConnectionHandler implements ConnectionHandler<Packet> {
                 log.debug("GalileoConnectionHandler: packet sent: {}", outgoingPacket.getPayload());
             }
         } catch (Exception e) {
-            players.remove(connection);
             log.warn("GalileoConnectionHandler: error while handling connection.", e);
+        } finally {
+            players.remove(connection);
         }
     }
 }

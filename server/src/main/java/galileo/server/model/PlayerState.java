@@ -13,6 +13,10 @@ public class PlayerState {
     private PedState pedState;
     @JsonProperty("pedCoords")
     private Vector3D pedCoords;
+    @JsonProperty("pedVelocity")
+    private Vector3D pedVelocity;
+    @JsonProperty("pedAcceleration")
+    private Vector3D pedAcceleration;
     @JsonProperty("pedColor")
     private String pedColor;
     @JsonProperty("pedHP")

@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Player {
+    @JsonProperty("id")
+    private int id;
     @JsonProperty("nickname")
     private String nickname;
     @JsonProperty("state")
