@@ -14,9 +14,18 @@ end
 
 function ConfigManager:reload()
     self.config = inicfg.load({
-        server ={
+        server = {
             hostname = "127.0.0.1",
             port = 5000
+        },
+        timing = {
+            sampCheckPeriod = 200,
+            inputPeriod = 10,
+            renderPeriod = 0
+        },
+        hotkeys = {
+            networking = 76, -- 'L'
+            rendering = 80 -- 'P'
         }
     }, configFile)
 end
