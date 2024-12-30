@@ -79,7 +79,7 @@ local function renderThread(previousPlayersTable, currentPlayersTable)
                         bufferSumm = Vector3D.add(bufferSumm, actualCoordinates)
 
                         -- result of transformation is average coordinates
-                        transformatedCoords = Vector3D.divide(bufferSumm, #buffer)
+                        transformatedCoords = Vector3D.divide(bufferSumm, #buffer + 1)
                     else -- otherwise do interpolation
                         local previousPacketTime = previousPlayersTable[id].timeUpdated
                         local currentPacketTime = currentPlayersTable[id].timeUpdated
