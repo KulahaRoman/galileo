@@ -6,7 +6,11 @@ Connector.__index = Connector
 
 function Connector.connect(hostname, port)
     local socket = Socket.tcp()
-    socket:connect(hostname, port)
+
+    if not socket:connect(hostname, port) then
+        return nil
+    end
+
     return Connection.new(socket)
 end
 

@@ -13,6 +13,10 @@ local Vector3D = require("galileo.util.Vector3D")
 local SAMP_CHECK_PERIOD = 200
 local RENDER_PERIOD = 0
 
+local function userNotify(text)
+    sampAddChatMessage("[GALILEO] "..text, 0xDC143C)
+end
+
 local function renderThread(previousPlayersTable, currentPlayersTable)
     local playerRenderer = Renderer.new()
     local enabled = false
@@ -28,9 +32,9 @@ local function renderThread(previousPlayersTable, currentPlayersTable)
             enabled = not enabled
 
             if enabled then
-                sampAddChatMessage("Система Galileo активирована.", 0xFF00978E)
+                userNotify("{FFFFFF}Отображение маркеров {00FF00}активировано.")
             else
-                sampAddChatMessage("Система Galileo деактивирована.", 0xFF00978E)
+                userNotify("{FFFFFF}Отображение маркеров {FF0000}деактивировано.")
             end
         end
 
@@ -141,8 +145,7 @@ function main()
         wait(SAMP_CHECK_PERIOD)
     end
 
-    sampAddChatMessage("Система Galileo загружена.", 0xFF00978E)
-    sampAddChatMessage("Для активации, нажмите клавишу 'P'.", 0xFF00978E)
+    userNotify("{FFFFFF}Скрипт успешно загружен.")
 
     local configManager = ConfigManager.new()
 
@@ -150,7 +153,15 @@ function main()
     local port = configManager.config.server.port
 
     local connection = Connector.connect(hostname, port)
+    if not connection then
+        userNotify("{FF0000}Соединение не установлено.")
+        error("Failed to connect the server at "..hostname..":"..port)
+    end
+
+    userNotify("{00FF00}Соединение установлено.")
     print("Connected to "..hostname..":"..port)
+
+    userNotify("{FFFFFF}Для переключения отображения маркеров, нажмите клавишу 'P'.")
 
     local previousPlayersTable = {}
     local currentPlayersTable = {}
@@ -169,6 +180,12 @@ function main()
 
         -- receive players
         local packet = connection:read()
+        if not packet then
+            connection:close()
+            userNotify("{FF0000}Соединение потеряно.")
+            error("Failed to receive data. Connection closed.")
+        end
+
         local packetTime = Clock.getCurrentTimeMillis()
         local playersJson = packet.payload
         local playersTable = Serializer.deserializeObject(playersJson)

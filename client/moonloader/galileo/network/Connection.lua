@@ -1,8 +1,11 @@
 local Struct = require("struct")
+local Clock = require("galileo.util.Clock")
 local Packet = require("galileo.network.Packet")
 
 local Connection = {}
 Connection.__index = Connection
+
+Connection.timeout = 5000 -- 5 seconds
 
 function Connection.new(socket)
     local object = setmetatable({}, Connection)
@@ -22,9 +25,17 @@ function Connection:write(packet)
 end
 
 function Connection:read()
+    local invokationTime = Clock.getCurrentTimeMillis()
+
     local payloadLengthBytes
     while not payloadLengthBytes do
         payloadLengthBytes = self.socket:receive(4)
+
+        local currentTime = Clock.getCurrentTimeMillis()
+        if not payloadLengthBytes and currentTime - invokationTime > Connection.timeout then
+            return nil
+        end
+
         wait(0)
     end
 
@@ -33,10 +44,20 @@ function Connection:read()
     local payloadData
     while not payloadData do
         payloadData = self.socket:receive(payloadLength)
+
+        local currentTime = Clock.getCurrentTimeMillis()
+        if not payloadData and currentTime - invokationTime > Connection.timeout then
+            return nil
+        end
+
         wait(0)
     end
 
     return Packet.new(payloadData)
+end
+
+function Connection:close()
+    self.socket:close()
 end
 
 return Connection
