@@ -24,6 +24,14 @@ function Vector2D.add(left, right)
     return Vector2D.new(left.x + right.x, left.y + right.y)
 end
 
+function Vector2D.multiply(vector, scalar)
+    return Vector2D.new(vector.x * scalar, vector.y * scalar)
+end
+
+function Vector2D.divide(vector, scalar)
+    return Vector2D.new(vector.x / scalar, vector.y / scalar)
+end
+
 function Vector2D.normalize(vector)
     local magnitude = Vector2D.magnitude(vector)
 

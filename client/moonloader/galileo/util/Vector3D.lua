@@ -26,6 +26,14 @@ function Vector3D.add(left, right)
     return Vector3D.new(left.x + right.x, left.y + right.y, left.z + right.z)
 end
 
+function Vector3D.multiply(vector, scalar)
+    return Vector3D.new(vector.x * scalar, vector.y * scalar, vector.z * scalar)
+end
+
+function Vector3D.divide(vector, scalar)
+    return Vector3D.new(vector.x / scalar, vector.y / scalar, vector.z / scalar)
+end
+
 function Vector3D.normalize(vector)
     local magnitude = math.sqrt(vector.x^2 + vector.y^2 + vector.z^2)
     
