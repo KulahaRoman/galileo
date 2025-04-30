@@ -1,3 +1,6 @@
+local Configuration = require("galileo.config.Configuration")
+Configuration.reload()
+
 local Player = require("galileo.Player")
 local PlayerIDProvider = require("galileo.provider.PlayerIDProvider")
 local Connector = require("galileo.network.Connector")
@@ -5,17 +8,13 @@ local Packet = require("galileo.network.Packet")
 local PlayerProvider = require("galileo.provider.PlayerProvider")
 local Serializer = require("galileo.util.Serializer")
 local Clock = require("galileo.util.Clock")
-local ConfigManager = require("galileo.config.ConfigManager")
 local Renderer = require("galileo.render.PlayerRenderer")
 local values = require("galileo.util.ValuesIterator")
 local Vector3D = require("galileo.util.Vector3D")
 
-local configManager = ConfigManager.new()
-local playerRenderer = Renderer.new()
-
-local SAMP_CHECK_PERIOD = configManager.config.timing.sampCheckPeriod
-local INPUT_PERIOD = configManager.config.timing.inputPeriod
-local RENDER_PERIOD = configManager.config.timing.renderPeriod
+local SAMP_CHECK_PERIOD = Configuration.config.timing.sampCheckPeriod
+local INPUT_PERIOD = Configuration.config.timing.inputPeriod
+local RENDER_PERIOD = Configuration.config.timing.renderPeriod
 
 local networkingEnabled = true
 local renderingEnabled = true
@@ -28,8 +27,8 @@ local function userNotify(text)
 end
 
 local function inputLoop()
-    local networkingHotkey = configManager.config.hotkeys.networking
-    local renderingHotkey = configManager.config.hotkeys.rendering
+    local networkingHotkey = Configuration.config.hotkeys.networking
+    local renderingHotkey = Configuration.config.hotkeys.rendering
 
     while true do
         -- toggle networking
@@ -108,8 +107,8 @@ local function renderLoop()
                     local previousPacketTime = previousPlayersTable[id].timeUpdated
                     local currentPacketTime = currentPlayersTable[id].timeUpdated
 
-                    local previousCoords = previousPlayersTable[id].state.pedCoords
-                    local currentCoords = currentPlayersTable[id].state.pedCoords
+                    local previousCoords = previousPlayersTable[id].crd
+                    local currentCoords = currentPlayersTable[id].crd
 
                     local alpha = (currentPlayersTable[id].timeLocal - previousPacketTime) /
                                                         (currentPacketTime - previousPacketTime)
@@ -137,19 +136,15 @@ local function renderLoop()
                     -- result of transformation is average coordinates
                     transformatedCoords = Vector3D.divide(bufferSumm, #buffer)
                 end
-    
+
                 -- create new player state exceptionally for rendering
-                local playerState = {}
-                playerState.pedState = currentPlayersTable[id].state.pedState
-                playerState.pedCoords = transformatedCoords
-                playerState.pedVelocity = currentPlayersTable[id].state.pedVelocity
-                playerState.pedAcceleration = currentPlayersTable[id].state.pedAcceleration
-                playerState.pedColor = currentPlayersTable[id].state.pedColor
-                playerState.pedHP = currentPlayersTable[id].state.pedHP
-                playerState.pedAP = currentPlayersTable[id].state.pedAP
+                local renderPlayer = Player.new(player.id, player.nck, transformatedCoords,
+                                                player.vel, player.acc, player.col,
+                                                player.hp, player.ap, player.veh,
+                                                player.int, player.afk)
 
                 -- render player
-                playerRenderer:render(Player.new(player.id, player.nickname, playerState))
+                Renderer.render(renderPlayer)
             end
         end
 
@@ -159,16 +154,16 @@ local function renderLoop()
 end
 
 local function networkLoop()
-    local hostname = configManager.config.server.hostname
-    local port = configManager.config.server.port
+    local hostname = Configuration.config.server.hostname
+    local port = Configuration.config.server.port
 
-    local connection = Connector.connect(hostname, port)
-    if not connection then
-        userNotify("{FF0000}Соединение не установлено.")
-        error("Failed to connect the server at "..hostname..":"..port)
+    local connection, err = Connector.connect(hostname, port)
+    if err then
+        userNotify("{FFFFFF}Соединение {FF0000}не установлено.")
+        error("Failed to connect the server at "..hostname..":"..port..". Reason: "..err)
     end
 
-    userNotify("{00FF00}Соединение установлено.")
+    userNotify("{FFFFFF}Соединение {00FF00}установлено.")
     print("Connected to "..hostname..":"..port)
 
     while networkingEnabled do
@@ -177,14 +172,21 @@ local function networkLoop()
         local packet = Packet.new(playerJson)
 
         -- send player
-        connection:write(packet)
+        local sent, err = connection:write(packet)
+        if err then
+            connection:close()
+
+            userNotify("{FFFFFF}Соединение {FF0000}потеряно.")
+            error("Failed to send data: "..err..". Connection closed.")
+        end
 
         -- receive players
-        local packet = connection:read()
-        if not packet then
+        local packet, err = connection:read()
+        if err then
             connection:close()
-            userNotify("{FF0000}Соединение потеряно.")
-            error("Failed to receive data. Connection closed.")
+
+            userNotify("{FFFFFF}Соединение {FF0000}потеряно.")
+            error("Failed to receive data: "..err..". Connection closed.")
         end
 
         local packetTime = Clock.getCurrentTimeMillis()
@@ -236,6 +238,9 @@ local function networkLoop()
 
     -- close connection
     connection:close()
+
+    userNotify("{FFFFFF}Соединение {FF0000}закрыто.")
+    print("Connection closed.")
 end
 
 local function renderThread()
@@ -268,8 +273,8 @@ function main()
         wait(SAMP_CHECK_PERIOD)
     end
 
-    local networkingHotkey = string.char(configManager.config.hotkeys.networking)
-    local renderingHotkey = string.char(configManager.config.hotkeys.rendering)
+    local networkingHotkey = string.char(Configuration.config.hotkeys.networking)
+    local renderingHotkey = string.char(Configuration.config.hotkeys.rendering)
 
     userNotify("{FFFFFF}Скрипт успешно загружен.")
     userNotify("{FFFFFF}Для переключения обмена данными, нажмите клавишу '"..networkingHotkey.."'.")
