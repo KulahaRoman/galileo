@@ -4,16 +4,10 @@ local Vector2D = require('galileo.util.Vector2D')
 local Vector3D = require('galileo.util.Vector3D')
 
 local RENDER_MIN_DISTANCE = 50
+local FONT = renderCreateFont('Verdana', 12, FontFlag.BOLD + FontFlag.SHADOW)
 
 local PlayerRenderer = {}
 PlayerRenderer.__index = PlayerRenderer
-
-function PlayerRenderer.new()
-    local object = setmetatable({}, PlayerRenderer)
-    object.font = renderCreateFont('Verdana', 12, FontFlag.BOLD + FontFlag.SHADOW)
-
-    return object
-end
 
 function PlayerRenderer.isPointInView(pointCoords, cameraCoords, cameraPointCoords)
     local pointVector = Vector3D.sub(pointCoords, cameraCoords)
@@ -24,7 +18,7 @@ function PlayerRenderer.isPointInView(pointCoords, cameraCoords, cameraPointCoor
     return dotProduct > 0
 end
 
-function PlayerRenderer:renderCircle(x, y, radius, color)
+function PlayerRenderer.renderCircle(x, y, radius, color)
     renderBegin(6)
     renderColor(color)
 
@@ -46,20 +40,20 @@ function PlayerRenderer:renderCircle(x, y, radius, color)
     renderEnd()
 end
 
-function PlayerRenderer:renderPlayerMarker(coords, color)
+function PlayerRenderer.renderPlayerMarker(coords, color)
     local a, r, g, b = Color.explode(color)
     local playerColor = Color.implode(200, r, g, b)
     local borderColor = Color.implode(100, 0, 0, 0)
     local marginColor = Color.implode(150, 255, 255, 255)
 
-    PlayerRenderer:renderCircle(coords.x, coords.y, 13, borderColor)
-    PlayerRenderer:renderCircle(coords.x, coords.y, 12, marginColor)
-    PlayerRenderer:renderCircle(coords.x, coords.y, 10.5, borderColor)
-    PlayerRenderer:renderCircle(coords.x, coords.y, 9.5, playerColor)
+    PlayerRenderer.renderCircle(coords.x, coords.y, 13, borderColor)
+    PlayerRenderer.renderCircle(coords.x, coords.y, 12, marginColor)
+    PlayerRenderer.renderCircle(coords.x, coords.y, 10.5, borderColor)
+    PlayerRenderer.renderCircle(coords.x, coords.y, 9.5, playerColor)
 end
 
-function PlayerRenderer:render(player)
-    local playerCoords = player.state.pedCoords
+function PlayerRenderer.render(player)
+    local playerCoords = player.crd
     local cameraCoords = Vector3D.new(getActiveCameraCoordinates())
     local cameraPointCoords = Vector3D.new(getActiveCameraPointAt())
     local cameraToPlayerDistance = Vector3D.magnitude(Vector3D.sub(playerCoords, cameraCoords))
@@ -68,7 +62,7 @@ function PlayerRenderer:render(player)
             cameraToPlayerDistance > RENDER_MIN_DISTANCE then
         local screenCoords = Vector2D.new(convert3DCoordsToScreen(playerCoords.x, playerCoords.y, playerCoords.z))
 
-        PlayerRenderer:renderPlayerMarker(screenCoords, player.state.pedColor)
+        PlayerRenderer.renderPlayerMarker(screenCoords, player.col)
     end
 end
 
