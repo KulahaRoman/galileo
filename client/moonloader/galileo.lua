@@ -3,10 +3,11 @@ Configuration.reload()
 Configuration.save()
 
 local Player = require("galileo.Player")
+local PlayerProvider = require("galileo.provider.PlayerProvider")
 local PlayerIDProvider = require("galileo.provider.PlayerIDProvider")
+local ServerProvider = require("galileo.provider.ServerProvider")
 local Connector = require("galileo.network.Connector")
 local Packet = require("galileo.network.Packet")
-local PlayerProvider = require("galileo.provider.PlayerProvider")
 local Serializer = require("galileo.util.Serializer")
 local Clock = require("galileo.util.Clock")
 local Renderer = require("galileo.render.Renderer")
@@ -168,9 +169,10 @@ local function networkLoop()
     print("Connected to "..hostname..":"..port)
 
     while networkingEnabled do
+        local server = ServerProvider.getCurrentServer()
         local player = PlayerProvider.getCurrentPlayer()
-        local playerJson = Serializer.serializeObject(player)
-        local packet = Packet.new(playerJson)
+        local payload = Serializer.serializeObject({srv = server, plr = player})
+        local packet = Packet.new(payload)
 
         -- send player
         local sent, err = connection:write(packet)
