@@ -1,5 +1,6 @@
 local Configuration = require("galileo.config.Configuration")
 Configuration.reload()
+Configuration.save()
 
 local Player = require("galileo.Player")
 local PlayerIDProvider = require("galileo.provider.PlayerIDProvider")
@@ -8,7 +9,7 @@ local Packet = require("galileo.network.Packet")
 local PlayerProvider = require("galileo.provider.PlayerProvider")
 local Serializer = require("galileo.util.Serializer")
 local Clock = require("galileo.util.Clock")
-local Renderer = require("galileo.render.PlayerRenderer")
+local Renderer = require("galileo.render.Renderer")
 local values = require("galileo.util.ValuesIterator")
 local Vector3D = require("galileo.util.Vector3D")
 
@@ -224,16 +225,6 @@ local function networkLoop()
                 currentPlayersTable[player.id].buffer = {}
             end
         end
-    end
-
-    -- clear previous players table
-    for id in pairs(previousPlayersTable) do
-        previousPlayersTable[id] = nil
-    end
-
-    -- clear current players table
-    for id in pairs(currentPlayersTable) do
-        currentPlayersTable[id] = nil
     end
 
     -- close connection
