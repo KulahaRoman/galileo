@@ -31,7 +31,7 @@ public abstract class BaseServer<T> implements Server<T> {
                 var connection = acceptor.acceptConnection();
                 var connectionHandler = connectionHandlerFactory.createConnectionHandler();
 
-                log.debug("Connection accepted.");
+                log.info("Connection accepted.");
 
                 try {
                     executor.submit(() -> {
@@ -39,6 +39,8 @@ public abstract class BaseServer<T> implements Server<T> {
                             connectionHandler.handleConnection(connection, executor);
                         } catch (Exception e) {
                             log.warn("Error while handling connection", e);
+                        } finally {
+                            log.info("Connection closed.");
                         }
                     });
                 } catch (Exception e) {

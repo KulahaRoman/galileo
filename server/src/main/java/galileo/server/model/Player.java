@@ -1,5 +1,6 @@
 package galileo.server.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,4 +32,7 @@ public class Player {
     private int interior;
     @JsonProperty("afk")
     private boolean afk;
+    
+    @JsonIgnore
+    private long timestamp;
 }

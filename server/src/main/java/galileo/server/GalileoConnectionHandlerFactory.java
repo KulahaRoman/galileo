@@ -8,14 +8,17 @@ import galileo.server.model.Player;
 import java.util.Map;
 
 public class GalileoConnectionHandlerFactory implements ConnectionHandlerFactory<Packet> {
-    private final Map<Connection<Packet>, Player> players;
+    private final Map<Connection<Packet>, Player> connectionPlayer;
+    private final Map<Connection<Packet>, String> connectionServer;
 
-    public GalileoConnectionHandlerFactory(Map<Connection<Packet>, Player> players) {
-        this.players = players;
+    public GalileoConnectionHandlerFactory(Map<Connection<Packet>, Player> connectionPlayer,
+                                           Map<Connection<Packet>, String> connectionServer) {
+        this.connectionPlayer = connectionPlayer;
+        this.connectionServer = connectionServer;
     }
 
     @Override
     public ConnectionHandler<Packet> createConnectionHandler() {
-        return new GalileoConnectionHandler(players);
+        return new GalileoConnectionHandler(connectionPlayer, connectionServer);
     }
 }

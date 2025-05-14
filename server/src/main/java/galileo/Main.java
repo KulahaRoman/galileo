@@ -11,10 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Main {
     public static void main(String[] args) {
-        var players = new ThreadSafeHashMap<Connection<Packet>, Player>();
+        var connectionPlayer = new ThreadSafeHashMap<Connection<Packet>, Player>();
+        var connectionServer = new ThreadSafeHashMap<Connection<Packet>, String>();
 
         int port = Integer.parseInt(System.getenv("PORT"));
-        try (var server = new GalileoServer(port, new GalileoConnectionHandlerFactory(players))) {
+        try (var server = new GalileoServer(port,
+                new GalileoConnectionHandlerFactory(connectionPlayer, connectionServer))) {
             server.run();
         } catch (Exception e) {
             log.error(e.getMessage());
