@@ -269,7 +269,6 @@ function main()
     local networkingHotkey = string.char(Configuration.config.hotkeys.networking)
     local renderingHotkey = string.char(Configuration.config.hotkeys.rendering)
 
-    userNotify("{FFFFFF}Скрипт успешно загружен.")
     userNotify("{FFFFFF}Для переключения обмена данными, нажмите клавишу '"..networkingHotkey.."'.")
     userNotify("{FFFFFF}Для переключения отображения маркеров, нажмите клавишу '"..renderingHotkey.."'.")
 
