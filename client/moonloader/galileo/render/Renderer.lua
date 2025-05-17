@@ -2,7 +2,6 @@ local FontFlag = require('moonloader').font_flag
 local Color = require("galileo.util.Color")
 local Vector2D = require('galileo.util.Vector2D')
 local Vector3D = require('galileo.util.Vector3D')
-local InteriorProvider = require('galileo.provider.InteriorProvider')
 
 --local FONT = renderCreateFont('Verdana', 12, FontFlag.BOLD + FontFlag.SHADOW)
 local SCREEN_WIDTH, SCREEN_HEIGHT = getScreenResolution()
@@ -161,7 +160,7 @@ local function renderMarker(coords, distance, player)
 
     local playerAlpha = 165 * alpha
     if player.afk then
-        playerAlpha = playerAlpha / 3
+        playerAlpha = playerAlpha / 4
     end
 
     local borderAlpha = 165 * alpha
@@ -171,9 +170,9 @@ local function renderMarker(coords, distance, player)
     local borderColor = Color.implode(borderAlpha, 0, 0, 0)
     local marginColor = Color.implode(marginAlpha, 255, 255, 255)
 
-    local scale = 1 - (distance / 6000)
-    if scale < 0.5 then
-        scale = 0.5
+    local scale = 1 - (distance / 3000)
+    if scale < 0.45 then
+        scale = 0.45
     end
     if scale > 1.0 then
         scale = 1.0
@@ -197,11 +196,7 @@ function Renderer.render(player)
     local cameraPointCoords = Vector3D.new(getActiveCameraPointAt())
     local cameraToPlayerDistance = Vector3D.magnitude(Vector3D.sub(playerCoords, cameraCoords))
 
-    local playerInterior = player.int
-    local currentPlayerInterior = InteriorProvider.getCurrentInterior()
-
-    if isPointInView(playerCoords, cameraCoords, cameraPointCoords) and
-                playerInterior == currentPlayerInterior then
+    if isPointInView(playerCoords, cameraCoords, cameraPointCoords) then
         local screenCoords = Vector2D.new(convert3DCoordsToScreen(playerCoords.x, playerCoords.y, playerCoords.z))
 
         renderMarker(screenCoords, cameraToPlayerDistance, player)

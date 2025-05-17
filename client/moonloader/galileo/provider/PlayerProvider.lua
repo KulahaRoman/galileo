@@ -9,6 +9,7 @@ local ArmourPointsProvider = require("galileo.provider.ArmourPointsProvider")
 local PlayerColorProvider = require("galileo.provider.PlayerColorProvider")
 local VehicleProvider = require("galileo.provider.VehicleProvider")
 local InteriorProvider = require("galileo.provider.InteriorProvider")
+local ConnectionStatusProvider = require("galileo.provider.ConnectionStatusProvider")
 
 local PlayerProvider = {}
 PlayerProvider.__index = PlayerProvider
@@ -24,10 +25,11 @@ function PlayerProvider.getCurrentPlayer()
     local ap = ArmourPointsProvider.getCurrentArmourPoints()
     local vehicle = VehicleProvider.getCurrentVehicle()
     local interior = InteriorProvider.getCurrentInterior()
+    local connected = ConnectionStatusProvider.getCurrentStatus()
     local afk = false
 
     return Player.new(id, nickname, coords, velocity, acceleration,
-                    color, hp, ap, vehicle, interior, afk)
+                    color, hp, ap, vehicle, interior, connected, afk)
 end
 
 return PlayerProvider

@@ -2,7 +2,7 @@ local Player = {}
 Player.__index = Player
 
 function Player.new(id, nickname, coords, velocity, acceleration, color,
-                    hp, ap, vehicle, interior, afk)
+                    hp, ap, vehicle, interior, connected, afk)
     local object = setmetatable({}, Player)
     object.id = id
     object.nck = nickname
@@ -14,6 +14,7 @@ function Player.new(id, nickname, coords, velocity, acceleration, color,
     object.ap = ap
     object.veh = vehicle
     object.int = interior
+    object.con = connected
     object.afk = afk
 
     return object
@@ -30,10 +31,11 @@ function Player.parse(table)
     local ap = table.ap
     local vehicle = table.veh
     local interior = table.int
+    local connected = table.con
     local afk = table.afk
 
     return Player.new(id, nickname, coords, velocity, acceleration, color,
-                        hp, ap, vehicle, interior, afk)
+                        hp, ap, vehicle, interior, connected, afk)
 end
 
 function Player:__tostring()
@@ -47,6 +49,7 @@ function Player:__tostring()
             ", ap="..tostring(self.ap)..
             ", veh="..tostring(self.veh)..
             ", int="..tostring(self.int)..
+            ", con="..tostring(self.con)..
             ", afk="..tostring(self.afk)
 end
 

@@ -1,3 +1,7 @@
+script_name("Galileo")
+script_author("La_Roux")
+script_description("Система координации игроков в реальном времени.")
+
 local Configuration = require("galileo.config.Configuration")
 Configuration.reload()
 Configuration.save()
@@ -6,6 +10,8 @@ local Player = require("galileo.Player")
 local PlayerProvider = require("galileo.provider.PlayerProvider")
 local PlayerIDProvider = require("galileo.provider.PlayerIDProvider")
 local ServerProvider = require("galileo.provider.ServerProvider")
+local InteriorProvider = require('galileo.provider.InteriorProvider')
+local ConnectionStatusProvider = require("galileo.provider.ConnectionStatusProvider")
 local Connector = require("galileo.network.Connector")
 local Packet = require("galileo.network.Packet")
 local Serializer = require("galileo.util.Serializer")
@@ -14,7 +20,7 @@ local Renderer = require("galileo.render.Renderer")
 local values = require("galileo.util.ValuesIterator")
 local Vector3D = require("galileo.util.Vector3D")
 
-local SAMP_CHECK_PERIOD = Configuration.config.timing.sampCheckPeriod
+local SAMP_PERIOD = Configuration.config.timing.sampCheckPeriod
 local INPUT_PERIOD = Configuration.config.timing.inputPeriod
 local RENDER_PERIOD = Configuration.config.timing.renderPeriod
 
@@ -76,77 +82,66 @@ local function renderLoop()
             if  id ~= PlayerIDProvider.getCurrentPlayerID() and previousPlayersTable[id] ~= nil then
                 -- current player coordinates value after transformation
                 local transformatedCoords = nil
-
                 -- current player's buffer for simple average
                 local bufferSize = player.bufferSize
                 local buffer = player.buffer
-
                 local result, ped = sampGetCharHandleBySampPlayerId(id)
                 if result then -- if player is in stream distance, we can obtain his coordinates directly
                     local actualCoordinates = Vector3D.new(getCharCoordinates(ped))
-
                     -- if current player's actual coordinates are used, then we don't populate buffer,
                     -- but descrease it's size frame by frame to reduce "marker latency" to zero,
                     -- so eventually the marker will point at actual coordinates:
-
                     -- descrease buffer size by removing first value
                     if #buffer > 0 then
                         table.remove(buffer, 1)
                     end
-
                     -- calculate summ of available buffer values
                     local bufferSumm = Vector3D.new(0, 0, 0)
                     for vector in values(buffer) do
                         bufferSumm = Vector3D.add(bufferSumm, vector)
                     end
-
                     -- add current actual coordinates
                     bufferSumm = Vector3D.add(bufferSumm, actualCoordinates)
-
                     -- result of transformation is average coordinates
                     transformatedCoords = Vector3D.divide(bufferSumm, #buffer + 1)
                 else -- otherwise do interpolation
                     local previousPacketTime = previousPlayersTable[id].timeUpdated
                     local currentPacketTime = currentPlayersTable[id].timeUpdated
-
                     local previousCoords = previousPlayersTable[id].crd
                     local currentCoords = currentPlayersTable[id].crd
-
                     local alpha = (currentPlayersTable[id].timeLocal - previousPacketTime) /
                                                         (currentPacketTime - previousPacketTime)
                     local coordsDifference = Vector3D.sub(currentCoords, previousCoords)
                     local coordsShift = Vector3D.multiply(coordsDifference, alpha)
                     local coordsInterpolated = Vector3D.add(previousCoords, coordsShift)
-
                     currentPlayersTable[id].timeLocal = currentPlayersTable[id].timeLocal + dt
                     if currentPlayersTable[id].timeLocal >= currentPlayersTable[id].timeUpdated then
                         currentPlayersTable[id].timeLocal = currentPlayersTable[id].timeUpdated
                     end
-
                     -- update buffer with new coord value
                     table.insert(buffer, coordsInterpolated)
                     if #buffer > bufferSize then
                         table.remove(buffer, 1)
                     end
-
                     -- calculate current average value
                     local bufferSumm = Vector3D.new(0, 0, 0)
                     for vector in values(buffer) do
                         bufferSumm = Vector3D.add(bufferSumm, vector)
                     end
-
                     -- result of transformation is average coordinates
                     transformatedCoords = Vector3D.divide(bufferSumm, #buffer)
                 end
 
-                -- create new player state exceptionally for rendering
-                local renderPlayer = Player.new(player.id, player.nck, transformatedCoords,
+                if ConnectionStatusProvider.getCurrentStatus() and player.con and
+                        InteriorProvider.getCurrentInterior() == player.int then
+                    -- create new player state exceptionally for rendering
+                    local renderPlayer = Player.new(player.id, player.nck, transformatedCoords,
                                                 player.vel, player.acc, player.col,
                                                 player.hp, player.ap, player.veh,
-                                                player.int, player.afk)
-
-                -- render player
-                Renderer.render(renderPlayer)
+                                                player.int, player.con, player.afk)
+                    -- render player
+                    Renderer.render(renderPlayer)
+                end
             end
         end
 
@@ -257,13 +252,8 @@ local function networkThread()
 end
 
 function main()
-    if not isSampfuncsLoaded() or not isSampLoaded() then
-        error("SampFuncs is not available.")
-        return
-    end
-
-    while not isSampAvailable() do
-        wait(SAMP_CHECK_PERIOD)
+    while not isSampfuncsLoaded() or not isSampLoaded() or not isSampAvailable() do
+        wait(SAMP_PERIOD)
     end
 
     local networkingHotkey = string.char(Configuration.config.hotkeys.networking)

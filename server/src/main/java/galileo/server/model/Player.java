@@ -30,9 +30,11 @@ public class Player {
     private int vehicle;
     @JsonProperty("int")
     private int interior;
+    @JsonProperty("con")
+    private boolean connected;
     @JsonProperty("afk")
     private boolean afk;
-    
+
     @JsonIgnore
     private long timestamp;
 }
