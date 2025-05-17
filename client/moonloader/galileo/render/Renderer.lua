@@ -321,7 +321,7 @@ function Renderer.render(player, renderBadge)
         local ndy = dy / SCREEN_CENTER_Y
 
         local normScreenDistance = math.sqrt(ndx * ndx + ndy * ndy)
-        local screenFadeStart = 0.4
+        local screenFadeStart = 0.5
         local screenFadeEnd = 0.8
         local screenAlpha = 1.0 - clamp((normScreenDistance - screenFadeStart) / (screenFadeEnd - screenFadeStart), 0.0, 1.0)
 
