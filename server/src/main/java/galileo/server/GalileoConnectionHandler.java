@@ -51,6 +51,7 @@ public class GalileoConnectionHandler implements ConnectionHandler<Packet> {
                         .filter(entry -> entry.getValue().equals(server))
                         .map(Map.Entry::getKey)
                         .map(connectionPlayer::get)
+                        .filter(p -> p.getId() != player.getId())
                         .toList();
 
                 // update afk status if required
