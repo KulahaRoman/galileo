@@ -14,7 +14,7 @@ function Configuration.reload()
             port = 5000
         },
         timing = {
-            sampCheckPeriod = 200,
+            sampPeriod = 200,
             inputPeriod = 10,
             renderPeriod = 0,
             connectorTimeout = 5000,
@@ -22,7 +22,8 @@ function Configuration.reload()
         },
         hotkeys = {
             networking = 76, -- 'L'
-            rendering = 80 -- 'P'
+            markerRendering = 80, -- 'P'
+            badgeRendering = 77 -- 'M'
         }
     }, configFile)
 end

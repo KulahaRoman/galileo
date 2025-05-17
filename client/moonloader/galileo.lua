@@ -17,15 +17,16 @@ local Packet = require("galileo.network.Packet")
 local Serializer = require("galileo.util.Serializer")
 local Clock = require("galileo.util.Clock")
 local Renderer = require("galileo.render.Renderer")
-local values = require("galileo.util.ValuesIterator")
+local values = require("galileo.util.Values")
 local Vector3D = require("galileo.util.Vector3D")
 
-local SAMP_PERIOD = Configuration.config.timing.sampCheckPeriod
+local SAMP_PERIOD = Configuration.config.timing.sampPeriod
 local INPUT_PERIOD = Configuration.config.timing.inputPeriod
 local RENDER_PERIOD = Configuration.config.timing.renderPeriod
 
 local networkingEnabled = true
-local renderingEnabled = true
+local markerRenderingEnabled = true
+local badgeRenderingEnabled = true
 
 local previousPlayersTable = {}
 local currentPlayersTable = {}
@@ -36,7 +37,8 @@ end
 
 local function inputLoop()
     local networkingHotkey = Configuration.config.hotkeys.networking
-    local renderingHotkey = Configuration.config.hotkeys.rendering
+    local markerRenderingHotkey = Configuration.config.hotkeys.markerRendering
+    local badgeRenderingHotkey = Configuration.config.hotkeys.badgeRendering
 
     while true do
         -- toggle networking
@@ -50,14 +52,25 @@ local function inputLoop()
             end
         end
 
-        -- toggle rendering
-        if isKeyJustPressed(renderingHotkey) and not sampIsCursorActive() then
-            renderingEnabled = not renderingEnabled
+        -- toggle marker rendering
+        if isKeyJustPressed(markerRenderingHotkey) and not sampIsCursorActive() then
+            markerRenderingEnabled = not markerRenderingEnabled
 
-            if renderingEnabled then
+            if markerRenderingEnabled then
                 userNotify("{FFFFFF}Отображение маркеров {00FF00}активировано.")
             else
                 userNotify("{FFFFFF}Отображение маркеров {FF0000}деактивировано.")
+            end
+        end
+
+        -- toggle badge rendering
+        if isKeyJustPressed(badgeRenderingHotkey) and not sampIsCursorActive() then
+            badgeRenderingEnabled = not badgeRenderingEnabled
+
+            if badgeRenderingEnabled then
+                userNotify("{FFFFFF}Отображение бэйджей {00FF00}активировано.")
+            else
+                userNotify("{FFFFFF}Отображение бэйджей {FF0000}деактивировано.")
             end
         end
 
@@ -71,11 +84,13 @@ local function renderLoop()
     local previousTimestamp = 0
     local currentTimestamp = 0
 
-    while networkingEnabled and renderingEnabled do
+    while networkingEnabled and markerRenderingEnabled do
         previousTimestamp = currentTimestamp
         currentTimestamp = Clock.getCurrentTimeMillis()
 
         local dt = currentTimestamp - previousTimestamp
+
+        Renderer.renderBegin()
 
         -- perform final calculations before rendering
         for id, player in pairs(currentPlayersTable) do
@@ -140,10 +155,12 @@ local function renderLoop()
                                                 player.hp, player.ap, player.veh,
                                                 player.int, player.con, player.afk)
                     -- render player
-                    Renderer.render(renderPlayer)
+                    Renderer.render(renderPlayer, badgeRenderingEnabled)
                 end
             end
         end
+
+        Renderer.renderEnd()
 
         -- yield CPU
         wait(RENDER_PERIOD)
@@ -233,7 +250,7 @@ end
 
 local function renderThread()
     while true do
-        if renderingEnabled then
+        if markerRenderingEnabled then
             renderLoop()
         end
 
@@ -257,10 +274,12 @@ function main()
     end
 
     local networkingHotkey = string.char(Configuration.config.hotkeys.networking)
-    local renderingHotkey = string.char(Configuration.config.hotkeys.rendering)
+    local markerRenderingHotkey = string.char(Configuration.config.hotkeys.markerRendering)
+    local badgeRenderingHotkey = string.char(Configuration.config.hotkeys.badgeRendering)
 
     userNotify("{FFFFFF}Для переключения обмена данными, нажмите клавишу '"..networkingHotkey.."'.")
-    userNotify("{FFFFFF}Для переключения отображения маркеров, нажмите клавишу '"..renderingHotkey.."'.")
+    userNotify("{FFFFFF}Для переключения отображения маркеров, нажмите клавишу '"..markerRenderingHotkey.."'.")
+    userNotify("{FFFFFF}Для переключения отображения бэйджей, нажмите клавишу '"..badgeRenderingHotkey.."'.")
 
     lua_thread.create(networkThread)
     lua_thread.create(renderThread)
