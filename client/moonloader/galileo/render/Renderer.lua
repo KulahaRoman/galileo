@@ -295,7 +295,7 @@ local function renderBadge(badge)
     renderDrawTexture(icon, badge.coords.x + badge.size.width * 0.07, badge.coords.y + badge.size.height * 0.1,
                         badge.size.height, badge.size.height - badge.size.height * 0.1, 0, iconColor)
 
-    renderText(badge.coords.x + badge.size.width * 0.4, badge.coords.y + badge.size.height * 0.15,
+    renderText(badge.coords.x + 34, badge.coords.y + badge.size.height * 0.15,
                 badge.marker.player.nck, FONT, textColor)
 end
 
