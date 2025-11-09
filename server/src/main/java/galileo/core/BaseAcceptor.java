@@ -39,6 +39,9 @@ public abstract class BaseAcceptor<T> implements Acceptor<T> {
     public Connection<T> acceptConnection() throws Exception {
         var connectionChannel = serverChannel.accept();
 
+        var socket = connectionChannel.socket();
+        socket.setKeepAlive(true);
+
         var dataReader = dataReaderFactory.createDataReader(connectionChannel);
         var dataWriter = dataWriterFactory.createDataWriter(connectionChannel);
 
