@@ -4,7 +4,7 @@ script_description("Система координации игроков в реальном времени.")
 
 local Configuration = require("galileo.config.Configuration")
 Configuration.reload()
-Configuration.save()
+Configuration.save();
 
 local Player = require("galileo.Player")
 local PlayerProvider = require("galileo.provider.PlayerProvider")
@@ -31,7 +31,7 @@ local badgeRenderingEnabled = true
 local previousPlayersTable = {}
 local currentPlayersTable = {}
 
-local function userNotify(text)
+local function message(text)
     sampAddChatMessage("[GALILEO] "..text, 0xDC143C)
 end
 
@@ -46,9 +46,9 @@ local function inputLoop()
             networkingEnabled = not networkingEnabled
 
             if networkingEnabled then
-                userNotify("{FFFFFF}Обмен данными {00FF00}активирован.")
+                message("{FFFFFF}Обмен данными {00FF00}активирован.")
             else
-                userNotify("{FFFFFF}Обмен данными {FF0000}деактивирован.")
+                message("{FFFFFF}Обмен данными {FF0000}деактивирован.")
             end
         end
 
@@ -57,9 +57,9 @@ local function inputLoop()
             markerRenderingEnabled = not markerRenderingEnabled
 
             if markerRenderingEnabled then
-                userNotify("{FFFFFF}Отображение маркеров {00FF00}активировано.")
+                message("{FFFFFF}Отображение маркеров {00FF00}активировано.")
             else
-                userNotify("{FFFFFF}Отображение маркеров {FF0000}деактивировано.")
+                message("{FFFFFF}Отображение маркеров {FF0000}деактивировано.")
             end
         end
 
@@ -68,9 +68,9 @@ local function inputLoop()
             badgeRenderingEnabled = not badgeRenderingEnabled
 
             if badgeRenderingEnabled then
-                userNotify("{FFFFFF}Отображение бэйджей {00FF00}активировано.")
+                message("{FFFFFF}Отображение бэйджей {00FF00}активировано.")
             else
-                userNotify("{FFFFFF}Отображение бэйджей {FF0000}деактивировано.")
+                message("{FFFFFF}Отображение бэйджей {FF0000}деактивировано.")
             end
         end
 
@@ -172,12 +172,12 @@ local function networkLoop()
     local port = Configuration.config.server.port
 
     local connection, err = Connector.connect(hostname, port)
-    if err then
-        userNotify("{FFFFFF}Соединение {FF0000}не установлено.")
+    if not connection then
+        message("{FFFFFF}Соединение {FF0000}не установлено.")
         error("Failed to connect the server at "..hostname..":"..port..". Reason: "..err)
     end
 
-    userNotify("{FFFFFF}Соединение {00FF00}установлено.")
+    message("{FFFFFF}Соединение {00FF00}установлено.")
     print("Connected to "..hostname..":"..port)
 
     while networkingEnabled do
@@ -188,19 +188,19 @@ local function networkLoop()
 
         -- send player
         local sent, err = connection:write(packet)
-        if err then
-            connection:close()
+        if not sent then
+			connection:close();
 
-            userNotify("{FFFFFF}Соединение {FF0000}потеряно.")
+            message("{FFFFFF}Соединение {FF0000}потеряно.")
             error("Failed to send data: "..err..". Connection closed.")
         end
 
         -- receive players
         local packet, err = connection:read()
-        if err then
-            connection:close()
+        if not packet then
+            connection:close();
 
-            userNotify("{FFFFFF}Соединение {FF0000}потеряно.")
+            message("{FFFFFF}Соединение {FF0000}потеряно.")
             error("Failed to receive data: "..err..". Connection closed.")
         end
 
@@ -241,17 +241,19 @@ local function networkLoop()
         end
     end
 
-    -- close connection
-    connection:close()
+    connection:close();
 
-    userNotify("{FFFFFF}Соединение {FF0000}закрыто.")
+    message("{FFFFFF}Соединение {FF0000}закрыто.")
     print("Connection closed.")
 end
 
 local function renderThread()
     while true do
         if markerRenderingEnabled then
-            renderLoop()
+            local ok, err = pcall(renderLoop);
+            if not ok then
+                print("Error caught:", err);
+            end
         end
 
         wait(10)
@@ -261,7 +263,10 @@ end
 local function networkThread()
     while true do
         if networkingEnabled then
-            networkLoop()
+            local ok, err = pcall(networkLoop);
+            if not ok then
+                print("Error caught:", err);
+            end
         end
 
         wait(10)
@@ -277,9 +282,9 @@ function main()
     local markerRenderingHotkey = string.char(Configuration.config.hotkeys.markerRendering)
     local badgeRenderingHotkey = string.char(Configuration.config.hotkeys.badgeRendering)
 
-    userNotify("{FFFFFF}Для переключения обмена данными, нажмите клавишу '"..networkingHotkey.."'.")
-    userNotify("{FFFFFF}Для переключения отображения маркеров, нажмите клавишу '"..markerRenderingHotkey.."'.")
-    userNotify("{FFFFFF}Для переключения отображения бэйджей, нажмите клавишу '"..badgeRenderingHotkey.."'.")
+    message("{FFFFFF}Для переключения обмена данными, нажмите клавишу '"..networkingHotkey.."'.")
+    message("{FFFFFF}Для переключения отображения маркеров, нажмите клавишу '"..markerRenderingHotkey.."'.")
+    message("{FFFFFF}Для переключения отображения бэйджей, нажмите клавишу '"..badgeRenderingHotkey.."'.")
 
     lua_thread.create(networkThread)
     lua_thread.create(renderThread)
