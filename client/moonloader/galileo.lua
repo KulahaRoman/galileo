@@ -16,6 +16,7 @@ local Connector = require("galileo.network.Connector")
 local Packet = require("galileo.network.Packet")
 local Serializer = require("galileo.util.Serializer")
 local Clock = require("galileo.util.Clock")
+local Color = require("galileo.util.Color")
 local Renderer = require("galileo.render.Renderer")
 local values = require("galileo.util.Values")
 local Vector3D = require("galileo.util.Vector3D")
@@ -30,6 +31,8 @@ local badgeRenderingEnabled = true
 
 local previousPlayersTable = {}
 local currentPlayersTable = {}
+
+local markersPlayerTable = {} -- playerID -> markerhandle
 
 local function message(text)
     sampAddChatMessage("[GALILEO] "..text, 0xDC143C)
@@ -146,16 +149,22 @@ local function renderLoop()
                     -- result of transformation is average coordinates
                     transformatedCoords = Vector3D.divide(bufferSumm, #buffer)
                 end
-
+				
                 if ConnectionStatusProvider.getCurrentStatus() and player.con and
                         InteriorProvider.getCurrentInterior() == player.int then
-                    -- create new player state exceptionally for rendering
-                    local renderPlayer = Player.new(player.id, player.nck, transformatedCoords,
-                                                player.vel, player.acc, player.col,
-                                                player.hp, player.ap, player.veh,
-                                                player.int, player.con, player.afk)
-                    -- render player
+					-- create new player state exceptionally for rendering
+					local renderPlayer = Player.new(player.id, player.nck, transformatedCoords,
+													player.vel, player.acc, player.col,
+													player.hp, player.ap, player.veh,
+													player.int, player.con, player.afk)
+						
+                    -- render player's spatial marker
                     Renderer.render(renderPlayer, badgeRenderingEnabled)
+					
+					-- render player's map marker
+					local a, r, g, b = Color.explodeARGB(renderPlayer.col);
+					setBlipCoordinates(markersPlayerTable[id], renderPlayer.crd.x, renderPlayer.crd.y, renderPlayer.crd.z)
+					changeBlipColour(markersPlayerTable[id], Color.implodeARGB(r,g,b, 0xFF))
                 end
             end
         end
@@ -222,6 +231,12 @@ local function networkLoop()
         end
         for playerTable in values(playersTable) do
             local player = Player.parse(playerTable)
+			
+			if markersPlayerTable[player.id] == nil then
+				markersPlayerTable[player.id] = addBlipForCoord(player.crd.x, 
+																player.crd.y,
+																player.crd.z)
+			end
 
             currentPlayersTable[player.id] = player
             currentPlayersTable[player.id].timeUpdated = packetTime -- timestamp when player data received
@@ -239,6 +254,13 @@ local function networkLoop()
                 currentPlayersTable[player.id].buffer = {}
             end
         end
+		
+		for id in pairs(markersPlayerTable) do
+			if currentPlayersTable[id] == nil then
+				removeBlip(markersPlayerTable[id])
+				markersPlayerTable[id] = nil
+			end
+		end
     end
 
     connection:close();
@@ -290,4 +312,14 @@ function main()
     lua_thread.create(renderThread)
 
     inputLoop()
+end
+
+function onScriptTerminate(script, quitGame)
+	if script.name == "Galileo" then
+		-- remove all custom map markers
+		for id in pairs(markersPlayerTable) do
+			removeBlip(markersPlayerTable[id])
+			markersPlayerTable[id] = nil
+		end
+	end
 end

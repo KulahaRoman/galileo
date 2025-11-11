@@ -231,7 +231,7 @@ local function renderText(x, y, text, font, color)
 end
 
 local function renderMarker(marker)
-    local a, r, g, b = Color.explode(marker.player.col)
+    local a, r, g, b = Color.explodeARGB(marker.player.col)
 
     local playerAlpha = 200 * marker.alpha
     if marker.player.afk then
@@ -241,9 +241,9 @@ local function renderMarker(marker)
     local borderAlpha = 200 * marker.alpha
     local marginAlpha = 200 * marker.alpha
 
-    local playerColor = Color.implode(playerAlpha, r, g, b)
-    local borderColor = Color.implode(borderAlpha, 0, 0, 0)
-    local marginColor = Color.implode(marginAlpha, 255, 255, 255)
+    local playerColor = Color.implodeARGB(playerAlpha, r, g, b)
+    local borderColor = Color.implodeARGB(borderAlpha, 0, 0, 0)
+    local marginColor = Color.implodeARGB(marginAlpha, 255, 255, 255)
 
     local circleRadius = marker.radius
     local innerBorderRadius = circleRadius + 0.5
@@ -258,10 +258,10 @@ local function renderMarker(marker)
 end
 
 local function renderBadge(badge)
-    local fillColor = Color.implode(200 * badge.alpha, 255, 255 ,255)
-    local outlineColor = Color.implode(200 * badge.alpha, 0, 0 ,0)
-    local iconColor = Color.implode(255 * badge.alpha, 0, 0 ,0)
-    local textColor = Color.implode(255 * badge.alpha, 0, 0 ,0)
+    local fillColor = Color.implodeARGB(200 * badge.alpha, 255, 255 ,255)
+    local outlineColor = Color.implodeARGB(200 * badge.alpha, 0, 0 ,0)
+    local iconColor = Color.implodeARGB(255 * badge.alpha, 0, 0 ,0)
+    local textColor = Color.implodeARGB(255 * badge.alpha, 0, 0 ,0)
 
     renderRectangle(badge.coords.x, badge.coords.y, badge.coords.x + badge.size.width,
                     badge.coords.y + badge.size.height, fillColor)
