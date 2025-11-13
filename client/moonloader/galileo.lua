@@ -31,8 +31,9 @@ local badgeRenderingEnabled = true
 
 local previousPlayersTable = {}
 local currentPlayersTable = {}
+local markersPlayerTable = {}
 
-local markersPlayerTable = {} -- playerID -> markerhandle
+local connection = nil
 
 local function message(text)
     sampAddChatMessage("[GALILEO] "..text, 0xDC143C)
@@ -165,7 +166,10 @@ local function renderLoop()
 					local a, r, g, b = Color.explodeARGB(renderPlayer.col);
 					setBlipCoordinates(markersPlayerTable[id], renderPlayer.crd.x, renderPlayer.crd.y, renderPlayer.crd.z)
 					changeBlipColour(markersPlayerTable[id], Color.implodeARGB(r,g,b, 0xFF))
-                end
+                else
+					removeBlip(markersPlayerTable[id])
+					markersPlayerTable[id] = nil
+				end				
             end
         end
 
@@ -180,11 +184,13 @@ local function networkLoop()
     local hostname = Configuration.config.server.hostname
     local port = Configuration.config.server.port
 
-    local connection, err = Connector.connect(hostname, port)
-    if not connection then
+    local conn, err = Connector.connect(hostname, port)
+    if not conn then
         message("{FFFFFF}Соединение {FF0000}не установлено.")
         error("Failed to connect the server at "..hostname..":"..port..". Reason: "..err)
     end
+	
+	connection = conn
 
     message("{FFFFFF}Соединение {00FF00}установлено.")
     print("Connected to "..hostname..":"..port)
@@ -264,6 +270,7 @@ local function networkLoop()
     end
 
     connection:close();
+	connection = nil
 
     message("{FFFFFF}Соединение {FF0000}закрыто.")
     print("Connection closed.")
@@ -315,11 +322,12 @@ function main()
 end
 
 function onScriptTerminate(script, quitGame)
-	if script.name == "Galileo" then
-		-- remove all custom map markers
+	if script == thisScript() then
 		for id in pairs(markersPlayerTable) do
 			removeBlip(markersPlayerTable[id])
-			markersPlayerTable[id] = nil
+		end
+		if connection then
+			connection:close()
 		end
 	end
 end
