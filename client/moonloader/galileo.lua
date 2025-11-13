@@ -163,7 +163,7 @@ local function renderLoop()
                     Renderer.render(renderPlayer, badgeRenderingEnabled)
 					
 					-- render player's map marker
-					local a, r, g, b = Color.explodeARGB(renderPlayer.col);
+					local a, r, g, b = Color.explodeARGB(renderPlayer.col)
 					setBlipCoordinates(markersPlayerTable[id], renderPlayer.crd.x, renderPlayer.crd.y, renderPlayer.crd.z)
 					changeBlipColour(markersPlayerTable[id], Color.implodeARGB(r,g,b, 0xFF))
                 else
@@ -239,9 +239,14 @@ local function networkLoop()
             local player = Player.parse(playerTable)
 			
 			if markersPlayerTable[player.id] == nil then
-				markersPlayerTable[player.id] = addBlipForCoord(player.crd.x, 
-																player.crd.y,
-																player.crd.z)
+				local marker = addBlipForCoord(	player.crd.x, 
+												player.crd.y,
+												player.crd.z);
+				local a, r, g, b = Color.explodeARGB(player.col)
+				local color = Color.implodeARGB(r,g,b, 0xFF)
+				changeBlipColour(marker, color)
+				
+				markersPlayerTable[player.id] = marker								
 			end
 
             currentPlayersTable[player.id] = player
