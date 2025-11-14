@@ -1,4 +1,3 @@
-local FontFlag = require('moonloader').font_flag
 local Color = require("galileo.util.Color")
 local values = require('galileo.util.Values')
 local Vector2D = require('galileo.util.Vector2D')
