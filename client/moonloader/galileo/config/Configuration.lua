@@ -17,6 +17,7 @@ function Configuration.reload()
             sampPeriod = 200,
             inputPeriod = 10,
             renderPeriod = 0,
+            tabPeriod = 5000,
             connectorTimeout = 5000,
             connectionTimeout = 5000
         },

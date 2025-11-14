@@ -25,6 +25,7 @@ local Vector3D = require("galileo.util.Vector3D")
 local SAMP_PERIOD = Configuration.config.timing.sampPeriod
 local INPUT_PERIOD = Configuration.config.timing.inputPeriod
 local RENDER_PERIOD = Configuration.config.timing.renderPeriod
+local TAB_PERIOD = Configuration.config.timing.tabPeriod
 
 local networkingEnabled = true
 local markerRenderingEnabled = true
@@ -32,6 +33,7 @@ local badgeRenderingEnabled = true
 
 local previousPlayersTable = {}
 local currentPlayersTable = {}
+local currentTabPlayersTable = {}
 local markersPlayerTable = {}
 
 local connection = nil
@@ -241,32 +243,34 @@ local function networkLoop()
 
         for playerTable in values(playersTable) do
             local player = Player.parse(playerTable)
-			
-			if markersPlayerTable[player.nck] == nil then
-				local marker = addBlipForCoord(	player.crd.x, 
-												player.crd.y,
-												player.crd.z);
-				local _, r, g, b = Color.explodeARGB(player.col)
-				local color = Color.implodeARGB(r,g,b, 0xFF)
-				changeBlipColour(marker, color)
-				
-				markersPlayerTable[player.nck] = marker
-			end
 
-            currentPlayersTable[player.nck] = player
-            currentPlayersTable[player.nck].timeUpdated = packetTime -- timestamp when player data received
+            if currentTabPlayersTable[player.nck] ~= nil then
+                if markersPlayerTable[player.nck] == nil then
+                    local marker = addBlipForCoord(	player.crd.x,
+                            player.crd.y,
+                            player.crd.z);
+                    local _, r, g, b = Color.explodeARGB(player.col)
+                    local color = Color.implodeARGB(r,g,b, 0xFF)
+                    changeBlipColour(marker, color)
 
-            -- current interpolation time for this player
-            -- T(n)_local = T(n-1)_update
-            -- also initialize buffer for simple average calculation for current player
-            if previousPlayersTable[player.nck] ~= nil then
-                currentPlayersTable[player.nck].timeLocal = previousPlayersTable[player.nck].timeUpdated
+                    markersPlayerTable[player.nck] = marker
+                end
 
-                currentPlayersTable[player.nck].bufferSize = previousPlayersTable[player.nck].bufferSize
-                currentPlayersTable[player.nck].buffer = previousPlayersTable[player.nck].buffer
-            else
-                currentPlayersTable[player.nck].bufferSize = 20
-                currentPlayersTable[player.nck].buffer = {}
+                currentPlayersTable[player.nck] = player
+                currentPlayersTable[player.nck].timeUpdated = packetTime -- timestamp when player data received
+
+                -- current interpolation time for this player
+                -- T(n)_local = T(n-1)_update
+                -- also initialize buffer for simple average calculation for current player
+                if previousPlayersTable[player.nck] ~= nil then
+                    currentPlayersTable[player.nck].timeLocal = previousPlayersTable[player.nck].timeUpdated
+
+                    currentPlayersTable[player.nck].bufferSize = previousPlayersTable[player.nck].bufferSize
+                    currentPlayersTable[player.nck].buffer = previousPlayersTable[player.nck].buffer
+                else
+                    currentPlayersTable[player.nck].bufferSize = 20
+                    currentPlayersTable[player.nck].buffer = {}
+                end
             end
         end
 		
@@ -311,6 +315,21 @@ local function networkThread()
     end
 end
 
+local function tabThread()
+    while true do
+        currentTabPlayersTable = {}
+
+        for id = 0, 1000 do
+            if sampIsPlayerConnected(id) then
+                local nickname = sampGetPlayerNickname(id)
+                currentTabPlayersTable[nickname] = true
+            end
+        end
+
+        wait(TAB_PERIOD)
+    end
+end
+
 function main()
     while not isSampfuncsLoaded() or not isSampLoaded() or not isSampAvailable() do
         wait(SAMP_PERIOD)
@@ -326,6 +345,7 @@ function main()
 
     lua_thread.create(networkThread)
     lua_thread.create(renderThread)
+    lua_thread.create(tabThread)
 
     inputLoop()
 end
