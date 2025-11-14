@@ -98,8 +98,8 @@ local function renderLoop()
         Renderer.renderBegin()
 
         -- perform final calculations before rendering
-        for id, player in pairs(currentPlayersTable) do
-            if  id ~= PlayerIDProvider.getCurrentPlayerID() and previousPlayersTable[id] ~= nil then
+        for nickname, player in pairs(currentPlayersTable) do
+            if player.id ~= PlayerIDProvider.getCurrentPlayerID() and previousPlayersTable[nickname] ~= nil then
                 -- current player coordinates value after transformation
                 local transformatedCoords = nil
                 -- current player's buffer for simple average
@@ -125,18 +125,18 @@ local function renderLoop()
                     -- result of transformation is average coordinates
                     transformatedCoords = Vector3D.divide(bufferSumm, #buffer + 1)
                 else -- otherwise do interpolation
-                    local previousPacketTime = previousPlayersTable[id].timeUpdated
-                    local currentPacketTime = currentPlayersTable[id].timeUpdated
-                    local previousCoords = previousPlayersTable[id].crd
-                    local currentCoords = currentPlayersTable[id].crd
-                    local alpha = (currentPlayersTable[id].timeLocal - previousPacketTime) /
+                    local previousPacketTime = previousPlayersTable[nickname].timeUpdated
+                    local currentPacketTime = currentPlayersTable[nickname].timeUpdated
+                    local previousCoords = previousPlayersTable[nickname].crd
+                    local currentCoords = currentPlayersTable[nickname].crd
+                    local alpha = (currentPlayersTable[nickname].timeLocal - previousPacketTime) /
                                                         (currentPacketTime - previousPacketTime)
                     local coordsDifference = Vector3D.sub(currentCoords, previousCoords)
                     local coordsShift = Vector3D.multiply(coordsDifference, alpha)
                     local coordsInterpolated = Vector3D.add(previousCoords, coordsShift)
-                    currentPlayersTable[id].timeLocal = currentPlayersTable[id].timeLocal + dt
-                    if currentPlayersTable[id].timeLocal >= currentPlayersTable[id].timeUpdated then
-                        currentPlayersTable[id].timeLocal = currentPlayersTable[id].timeUpdated
+                    currentPlayersTable[nickname].timeLocal = currentPlayersTable[nickname].timeLocal + dt
+                    if currentPlayersTable[nickname].timeLocal >= currentPlayersTable[nickname].timeUpdated then
+                        currentPlayersTable[nickname].timeLocal = currentPlayersTable[nickname].timeUpdated
                     end
                     -- update buffer with new coord value
                     table.insert(buffer, coordsInterpolated)
@@ -165,11 +165,11 @@ local function renderLoop()
 					
 					-- render player's map marker
 					local a, r, g, b = Color.explodeARGB(renderPlayer.col)
-					setBlipCoordinates(markersPlayerTable[id], renderPlayer.crd.x, renderPlayer.crd.y, renderPlayer.crd.z)
-					changeBlipColour(markersPlayerTable[id], Color.implodeARGB(r,g,b, 0xFF))
+					setBlipCoordinates(markersPlayerTable[nickname], renderPlayer.crd.x, renderPlayer.crd.y, renderPlayer.crd.z)
+					changeBlipColour(markersPlayerTable[nickname], Color.implodeARGB(r,g,b, 0xFF))
                 else
-					removeBlip(markersPlayerTable[id])
-					markersPlayerTable[id] = nil
+					removeBlip(markersPlayerTable[nickname])
+					markersPlayerTable[nickname] = nil
 				end				
             end
         end
@@ -227,21 +227,22 @@ local function networkLoop()
         local playersTable = Serializer.deserializeObject(playersJson)
 
         -- update previous players table
-        for id in pairs(previousPlayersTable) do
-            previousPlayersTable[id] = nil
+        for nickname in pairs(previousPlayersTable) do
+            previousPlayersTable[nickname] = nil
         end
-        for id, player in pairs(currentPlayersTable) do
-            previousPlayersTable[id] = player
+        for nickname, player in pairs(currentPlayersTable) do
+            previousPlayersTable[nickname] = player
         end
 
         -- update current players table
-        for id in pairs(currentPlayersTable) do
-            currentPlayersTable[id] = nil
+        for nickname in pairs(currentPlayersTable) do
+            currentPlayersTable[nickname] = nil
         end
+
         for playerTable in values(playersTable) do
             local player = Player.parse(playerTable)
 			
-			if markersPlayerTable[player.id] == nil then
+			if markersPlayerTable[player.nck] == nil then
 				local marker = addBlipForCoord(	player.crd.x, 
 												player.crd.y,
 												player.crd.z);
@@ -249,30 +250,30 @@ local function networkLoop()
 				local color = Color.implodeARGB(r,g,b, 0xFF)
 				changeBlipColour(marker, color)
 				
-				markersPlayerTable[player.id] = marker								
+				markersPlayerTable[player.nck] = marker
 			end
 
-            currentPlayersTable[player.id] = player
-            currentPlayersTable[player.id].timeUpdated = packetTime -- timestamp when player data received
+            currentPlayersTable[player.nck] = player
+            currentPlayersTable[player.nck].timeUpdated = packetTime -- timestamp when player data received
 
             -- current interpolation time for this player
             -- T(n)_local = T(n-1)_update
             -- also initialize buffer for simple average calculation for current player
-            if previousPlayersTable[player.id] ~= nil then
-                currentPlayersTable[player.id].timeLocal = previousPlayersTable[player.id].timeUpdated
+            if previousPlayersTable[player.nck] ~= nil then
+                currentPlayersTable[player.nck].timeLocal = previousPlayersTable[player.nck].timeUpdated
 
-                currentPlayersTable[player.id].bufferSize = previousPlayersTable[player.id].bufferSize
-                currentPlayersTable[player.id].buffer = previousPlayersTable[player.id].buffer
+                currentPlayersTable[player.nck].bufferSize = previousPlayersTable[player.nck].bufferSize
+                currentPlayersTable[player.nck].buffer = previousPlayersTable[player.nck].buffer
             else
-                currentPlayersTable[player.id].bufferSize = 20
-                currentPlayersTable[player.id].buffer = {}
+                currentPlayersTable[player.nck].bufferSize = 20
+                currentPlayersTable[player.nck].buffer = {}
             end
         end
 		
-		for id in pairs(markersPlayerTable) do
-			if currentPlayersTable[id] == nil then
-				removeBlip(markersPlayerTable[id])
-				markersPlayerTable[id] = nil
+		for nickname in pairs(markersPlayerTable) do
+			if currentPlayersTable[nickname] == nil then
+				removeBlip(markersPlayerTable[nickname])
+				markersPlayerTable[nickname] = nil
 			end
 		end
     end
@@ -331,8 +332,8 @@ end
 
 function onScriptTerminate(script, quitGame)
 	if script == script.this then
-		for id in pairs(markersPlayerTable) do
-			removeBlip(markersPlayerTable[id])
+		for nickname in pairs(markersPlayerTable) do
+			removeBlip(markersPlayerTable[nickname])
 		end
 		if connection then
 			connection:close()
