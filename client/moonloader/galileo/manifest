@@ -1,0 +1,5 @@
+{
+  "title": "Galileo",
+  "directory": "galileo",
+  "executable": "galileo.lua"
+}
