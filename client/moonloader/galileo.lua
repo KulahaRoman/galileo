@@ -1,6 +1,7 @@
 script_name("Galileo")
 script_author("La_Roux")
 script_description("Система координации игроков в реальном времени.")
+script_properties("forced-reloading-only")
 
 local Configuration = require("galileo.config.Configuration")
 Configuration.reload()
@@ -32,6 +33,10 @@ local badgeRenderingEnabled = true
 local previousPlayersTable = {}
 local currentPlayersTable = {}
 local markersPlayerTable = {}
+
+for _, s in ipairs(script.list()) do
+	print(s.name)
+end
 
 local connection = nil
 
@@ -205,6 +210,7 @@ local function networkLoop()
         local sent, err = connection:write(packet)
         if not sent then
 			connection:close();
+			connection = nil
 
             message("{FFFFFF}Соединение {FF0000}потеряно.")
             error("Failed to send data: "..err..". Connection closed.")
@@ -214,6 +220,7 @@ local function networkLoop()
         local packet, err = connection:read()
         if not packet then
             connection:close();
+			connection = nil
 
             message("{FFFFFF}Соединение {FF0000}потеряно.")
             error("Failed to receive data: "..err..". Connection closed.")
@@ -327,7 +334,7 @@ function main()
 end
 
 function onScriptTerminate(script, quitGame)
-	if script == thisScript() then
+	if script == script.this then
 		for id in pairs(markersPlayerTable) do
 			removeBlip(markersPlayerTable[id])
 		end
