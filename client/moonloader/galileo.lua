@@ -245,7 +245,7 @@ local function networkLoop()
 				local marker = addBlipForCoord(	player.crd.x, 
 												player.crd.y,
 												player.crd.z);
-				local a, r, g, b = Color.explodeARGB(player.col)
+				local _, r, g, b = Color.explodeARGB(player.col)
 				local color = Color.implodeARGB(r,g,b, 0xFF)
 				changeBlipColour(marker, color)
 				
