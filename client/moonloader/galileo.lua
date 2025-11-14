@@ -34,10 +34,6 @@ local previousPlayersTable = {}
 local currentPlayersTable = {}
 local markersPlayerTable = {}
 
-for _, s in ipairs(script.list()) do
-	print(s.name)
-end
-
 local connection = nil
 
 local function message(text)
