@@ -102,14 +102,19 @@ local function renderLoop()
         -- perform final calculations before rendering
         for nickname, player in pairs(currentPlayersTable) do
             if player.id ~= PlayerIDProvider.getCurrentPlayerID() and previousPlayersTable[nickname] ~= nil then
-                -- current player coordinates value after transformation
-                local transformatedCoords = nil
+                -- current marker and player coordinates values after transformation
+                local markerCoords = nil
+                local playerCoords = nil
+
                 -- current player's buffer for simple average
                 local bufferSize = player.bufferSize
                 local buffer = player.buffer
-                local result, ped = sampGetCharHandleBySampPlayerId(id)
+
+                local result, ped = sampGetCharHandleBySampPlayerId(player.id)
                 if result then -- if player is in stream distance, we can obtain his coordinates directly
                     local actualCoordinates = Vector3D.new(getCharCoordinates(ped))
+                    markerCoords = actualCoordinates
+
                     -- if current player's actual coordinates are used, then we don't populate buffer,
                     -- but descrease it's size frame by frame to reduce "marker latency" to zero,
                     -- so eventually the marker will point at actual coordinates:
@@ -117,6 +122,7 @@ local function renderLoop()
                     if #buffer > 0 then
                         table.remove(buffer, 1)
                     end
+
                     -- calculate summ of available buffer values
                     local bufferSumm = Vector3D.new(0, 0, 0)
                     for vector in values(buffer) do
@@ -125,7 +131,7 @@ local function renderLoop()
                     -- add current actual coordinates
                     bufferSumm = Vector3D.add(bufferSumm, actualCoordinates)
                     -- result of transformation is average coordinates
-                    transformatedCoords = Vector3D.divide(bufferSumm, #buffer + 1)
+                    playerCoords = Vector3D.divide(bufferSumm, #buffer + 1)
                 else -- otherwise do interpolation
                     local previousPacketTime = previousPlayersTable[nickname].timeUpdated
                     local currentPacketTime = currentPlayersTable[nickname].timeUpdated
@@ -151,13 +157,14 @@ local function renderLoop()
                         bufferSumm = Vector3D.add(bufferSumm, vector)
                     end
                     -- result of transformation is average coordinates
-                    transformatedCoords = Vector3D.divide(bufferSumm, #buffer)
+                    playerCoords = Vector3D.divide(bufferSumm, #buffer)
+                    markerCoords = playerCoords
                 end
 				
                 if ConnectionStatusProvider.getCurrentStatus() and player.con and
                         InteriorProvider.getCurrentInterior() == player.int then
 					-- create new player state exceptionally for rendering
-					local renderPlayer = Player.new(player.id, player.nck, transformatedCoords,
+					local renderPlayer = Player.new(player.id, player.nck, playerCoords,
 													player.vel, player.acc, player.col,
 													player.hp, player.ap, player.veh,
 													player.int, player.con, player.afk)
@@ -167,7 +174,7 @@ local function renderLoop()
 					
 					-- render player's map marker
 					local a, r, g, b = Color.explodeARGB(renderPlayer.col)
-					setBlipCoordinates(markersPlayerTable[nickname], renderPlayer.crd.x, renderPlayer.crd.y, renderPlayer.crd.z)
+					setBlipCoordinates(markersPlayerTable[nickname], markerCoords.x, markerCoords.y, markerCoords.z)
 					changeBlipColour(markersPlayerTable[nickname], Color.implodeARGB(r,g,b, 0xFF))
                 else
 					removeBlip(markersPlayerTable[nickname])
@@ -268,7 +275,7 @@ local function networkLoop()
                     currentPlayersTable[player.nck].bufferSize = previousPlayersTable[player.nck].bufferSize
                     currentPlayersTable[player.nck].buffer = previousPlayersTable[player.nck].buffer
                 else
-                    currentPlayersTable[player.nck].bufferSize = 20
+                    currentPlayersTable[player.nck].bufferSize = 50
                     currentPlayersTable[player.nck].buffer = {}
                 end
             end
