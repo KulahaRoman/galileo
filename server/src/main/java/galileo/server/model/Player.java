@@ -26,8 +26,12 @@ public class Player {
     private int hp;
     @JsonProperty("ap")
     private int ap;
-    @JsonProperty("veh")
-    private int vehicle;
+    @JsonProperty("vehm")
+    private int vehicleModel;
+    @JsonProperty("vehi")
+    private int vehicleID;
+    @JsonProperty("vehs")
+    private int vehicleSeat;
     @JsonProperty("int")
     private int interior;
     @JsonProperty("con")
