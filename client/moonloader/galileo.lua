@@ -35,6 +35,7 @@ local previousPlayersTable = {}
 local currentPlayersTable = {}
 local currentTabPlayersTable = {}
 local markersPlayerTable = {}
+local vehicleCoordsTable = {}
 
 local connection = nil
 
@@ -96,6 +97,9 @@ local function renderLoop()
         currentTimestamp = Clock.getCurrentTimeMillis()
 
         local dt = currentTimestamp - previousTimestamp
+
+        -- whipe vehicle coordinates table
+        vehicleCoordsTable = {}
 
         Renderer.renderBegin()
 
@@ -159,6 +163,15 @@ local function renderLoop()
                     -- result of transformation is average coordinates
                     playerCoords = Vector3D.divide(bufferSumm, #buffer)
                     markerCoords = playerCoords
+                end
+
+                -- all players in same vehicle must have identical coordinates
+                if player.vehi ~= -1 then
+                    if vehicleCoordsTable[player.vehi] == nil then
+                        vehicleCoordsTable[player.vehi] = playerCoords
+                    else
+                        playerCoords = vehicleCoordsTable[player.vehi]
+                    end
                 end
 				
                 if ConnectionStatusProvider.getCurrentStatus() and player.con and
