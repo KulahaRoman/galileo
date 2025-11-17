@@ -110,32 +110,35 @@ local function renderLoop()
                 local markerCoords = nil
                 local playerCoords = nil
 
-                -- current player's buffer for simple average
-                local bufferSize = player.bufferSize
-                local buffer = player.buffer
-
                 local result, ped = sampGetCharHandleBySampPlayerId(player.id)
                 if result then -- if player is in stream distance, we can obtain his coordinates directly
                     local actualCoordinates = Vector3D.new(getCharCoordinates(ped))
                     markerCoords = actualCoordinates
 
-                    -- if current player's actual coordinates are used, then we don't populate buffer,
-                    -- but descrease it's size frame by frame to reduce "marker latency" to zero,
-                    -- so eventually the marker will point at actual coordinates:
-                    -- descrease buffer size by removing first value
-                    if #buffer > 0 then
-                        table.remove(buffer, 1)
-                    end
+                    if previousPlayersTable[nickname].int == currentPlayersTable[nickname].int
+                                    and previousPlayersTable[nickname].hp > 0 then
+                        -- if current player's actual coordinates are used, then we don't populate buffer,
+                        -- but descrease it's size frame by frame to reduce "marker latency" to zero,
+                        -- so eventually the marker will point at actual coordinates:
+                        -- descrease buffer size by removing first value
+                        if #player.buffer > 0 then
+                            table.remove(player.buffer, 1)
+                        end
 
-                    -- calculate summ of available buffer values
-                    local bufferSumm = Vector3D.new(0, 0, 0)
-                    for vector in values(buffer) do
-                        bufferSumm = Vector3D.add(bufferSumm, vector)
+                        -- calculate summ of available buffer values
+                        local bufferSumm = Vector3D.new(0, 0, 0)
+                        for vector in values(player.buffer) do
+                            bufferSumm = Vector3D.add(bufferSumm, vector)
+                        end
+
+                        -- add current actual coordinates
+                        bufferSumm = Vector3D.add(bufferSumm, actualCoordinates)
+                        
+                        -- result of transformation is average coordinates
+                        playerCoords = Vector3D.divide(bufferSumm, #player.buffer + 1)
+                    else
+                        playerCoords = actualCoordinates
                     end
-                    -- add current actual coordinates
-                    bufferSumm = Vector3D.add(bufferSumm, actualCoordinates)
-                    -- result of transformation is average coordinates
-                    playerCoords = Vector3D.divide(bufferSumm, #buffer + 1)
                 else -- otherwise do interpolation
                     local previousPacketTime = previousPlayersTable[nickname].timeUpdated
                     local currentPacketTime = currentPlayersTable[nickname].timeUpdated
@@ -150,29 +153,41 @@ local function renderLoop()
                     if currentPlayersTable[nickname].timeLocal >= currentPlayersTable[nickname].timeUpdated then
                         currentPlayersTable[nickname].timeLocal = currentPlayersTable[nickname].timeUpdated
                     end
-                    -- update buffer with new coord value
-                    table.insert(buffer, coordsInterpolated)
-                    if #buffer > bufferSize then
-                        table.remove(buffer, 1)
+
+                    if previousPlayersTable[nickname].int == currentPlayersTable[nickname].int
+                                    and previousPlayersTable[nickname].hp > 0 then
+                        -- update buffer with new coord value
+                        table.insert(player.buffer, coordsInterpolated)
+                        if #player.buffer > player.bufferSize then
+                            table.remove(player.buffer, 1)
+                        end
+
+                        -- calculate current average value
+                        local bufferSumm = Vector3D.new(0, 0, 0)
+                        for vector in values(player.buffer) do
+                            bufferSumm = Vector3D.add(bufferSumm, vector)
+                        end
+
+                        -- result of transformation is average coordinates
+                        playerCoords = Vector3D.divide(bufferSumm, #player.buffer)
+                    else
+                        player.buffer = {}
+                        playerCoords = player.crd
                     end
-                    -- calculate current average value
-                    local bufferSumm = Vector3D.new(0, 0, 0)
-                    for vector in values(buffer) do
-                        bufferSumm = Vector3D.add(bufferSumm, vector)
-                    end
-                    -- result of transformation is average coordinates
-                    playerCoords = Vector3D.divide(bufferSumm, #buffer)
+                    
                     markerCoords = playerCoords
                 end
 
+                -- гарантировать что афк в конце
                 -- all players in same vehicle must have identical coordinates
-                if player.vehi ~= -1 then
-                    if vehicleCoordsTable[player.vehi] == nil then
-                        vehicleCoordsTable[player.vehi] = playerCoords
-                    else
-                        playerCoords = vehicleCoordsTable[player.vehi]
-                    end
-                end
+                --if player.vehi ~= -1 then
+                --    if vehicleCoordsTable[player.vehi] == nil and not player.afk then
+                --        vehicleCoordsTable[player.vehi] = playerCoords
+                --    else
+                --        playerCoords = vehicleCoordsTable[player.vehi]
+                --        player.buffer = {}
+                --    end
+                --end
 				
                 if ConnectionStatusProvider.getCurrentStatus() and player.con and
                         InteriorProvider.getCurrentInterior() == player.int then
@@ -289,7 +304,7 @@ local function networkLoop()
                     currentPlayersTable[player.nck].bufferSize = previousPlayersTable[player.nck].bufferSize
                     currentPlayersTable[player.nck].buffer = previousPlayersTable[player.nck].buffer
                 else
-                    currentPlayersTable[player.nck].bufferSize = 50
+                    currentPlayersTable[player.nck].bufferSize = 100
                     currentPlayersTable[player.nck].buffer = {}
                 end
             end
