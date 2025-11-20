@@ -166,7 +166,7 @@ local function renderLoop()
 					-- create new player state exceptionally for rendering
 					local renderPlayer = Player.new(player.id, player.nck, playerCoords,
 													player.vel, player.acc, player.col,
-													player.hp, player.ap, player.veh,
+													player.hp, player.ap, player.vehm, player.vehi,
 													player.int, player.con, player.afk)
 						
                     -- render player's spatial marker

@@ -2,7 +2,7 @@ local Player = {}
 Player.__index = Player
 
 function Player.new(id, nickname, coords, velocity, acceleration, color,
-                    hp, ap, vehicleModel, vehicleID, vehicleSeat, interior, connected, afk)
+                    hp, ap, vehicleModel, vehicleID, interior, connected, afk)
     local object = setmetatable({}, Player)
     object.id = id
     object.nck = nickname
@@ -14,7 +14,6 @@ function Player.new(id, nickname, coords, velocity, acceleration, color,
     object.ap = ap
     object.vehm = vehicleModel
     object.vehi = vehicleID
-    object.vehs = vehicleSeat
     object.int = interior
     object.con = connected
     object.afk = afk
@@ -33,13 +32,12 @@ function Player.parse(table)
     local ap = table.ap
     local vehicleModel = table.vehm
     local vehicleID = table.vehi
-    local vehicleSeat = table.vehs
     local interior = table.int
     local connected = table.con
     local afk = table.afk
 
     return Player.new(id, nickname, coords, velocity, acceleration, color,
-                        hp, ap, vehicleModel, vehicleID, vehicleSeat, interior, connected, afk)
+                        hp, ap, vehicleModel, vehicleID, interior, connected, afk)
 end
 
 return Player
